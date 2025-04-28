@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Albumok nyilvántartása</title>
+  <style>
+    body {
+      background-color: rgb(40, 40, 40);
+      text-align: center;
+      color: rgb(192, 192, 192);
+    }
+
+    table {
+      margin: auto;
+      width: 600px;
+      background-color: rgb(128, 0, 32);
+      border-collapse: collapse;
+      color: rgb(192, 192, 192);
+
+    }
+
+    th,
+    td {
+      border: 2px solid black;
+      padding: 10px;
+    }
+
+    .container {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .box {
+      background-color: rgb(128, 0, 32);
+      border: 2px solid black;
+      padding: 10px;
+      width: 250px;
+      color: rgb(192, 192, 192);
+      text-decoration: underline;
+    }
+
+    input {
+      margin-top: 5px;
+      width: 80%;
+    }
+
+    button {
+      margin-top: 5px;
+      width: 40%;
+    }
+  </style>
+</head>
+
+<body onload="listAlbums()">
+
+  <h1>Zenekarok albumai</h1>
+
+  <table id="albumTable">
+    <tr>
+      <th>ID</th>
+      <th>Zenekar</th>
+      <th>Album címe</th>
+      <th>Dalok száma</th>
+      <th>Megjelenés éve</th>
+    </tr>
+  </table>
+
+  <div class="container">
+    <div class="box">
+      <h3>Új album hozzáadása</h3>
+      <input type="text" id="band" placeholder="Zenekar" />
+      <input type="text" id="title" placeholder="Album címe" />
+      <input type="number" id="songs" placeholder="Dalok száma" />
+      <input type="number" id="year" placeholder="Megjelenés éve" />
+      <button onclick="addAlbum()">Hozzáadás</button>
+    </div>
+
+    <div class="box">
+      <h3>Album módosítása</h3>
+      <input type="number" id="editId" placeholder="Album ID" />
+      <input type="text" id="editBand" placeholder="Zenekar" />
+      <input type="text" id="editTitle" placeholder="Album címe" />
+      <input type="number" id="editSongs" placeholder="Dalok száma" />
+      <input type="number" id="editYear" placeholder="Megjelenés éve" />
+      <button onclick="editAlbum()">Módosítás</button>
+    </div>
+
+    <div class="box">
+      <h3>Album törlése</h3>
+      <input type="number" id="deleteId" placeholder="Album ID" />
+      <button onclick="deleteAlbum()">Törlés</button>
+    </div>
+  </div>
+
+
+  <script>
+
+    async function listAlbums() {
+      const response = await fetch("http://localhost:3000/albums");
+      const albums = await response.json();
+
+      const table = document.getElementById("albumTable");
+      while (table.rows.length > 1) table.deleteRow(1);
+
+      for (const i of albums) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${i.id}</td><td>${i.band}</td><td>${i.title}</td><td>${i.songs}</td><td>${i.year}</td>`;
+        table.appendChild(tr);
+      }
+
+    }
+
+    async function addAlbum() {
+      const band = document.getElementById("band").value;
+      const title = document.getElementById("title").value;
+      const songs = parseInt(document.getElementById("songs").value);
+      const year = parseInt(document.getElementById("year").value);
+
+      if (!band || !title || isNaN(songs) || isNaN(year)) {
+        alert("Hiányzó vagy hibás adat!");
+        return;
+      }
+
+      await fetch("http://localhost:3000/albums", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ band, title, songs, year })
+      });
+
+      document.getElementById("band").value = "";
+      document.getElementById("title").value = "";
+      document.getElementById("songs").value = "";
+      document.getElementById("year").value = "";
+
+      alert("Album hozzáadva!");
+      listAlbums();
+    }
+
+    async function editAlbum() {
+      const id = parseInt(document.getElementById("editId").value);
+      const band = document.getElementById("editBand").value;
+      const title = document.getElementById("editTitle").value;
+      const songs = parseInt(document.getElementById("editSongs").value);
+      const year = parseInt(document.getElementById("editYear").value);
+
+      if (isNaN(id) || !band || !title || isNaN(songs) || isNaN(year)) {
+        alert("Hiányzó vagy hibás adat!");
+        return;
+      }
+
+      await fetch(`http://localhost:3000/albums/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ band, title, songs, year })
+      });
+
+      document.getElementById("editId").value = "";
+      document.getElementById("editBand").value = "";
+      document.getElementById("editTitle").value = "";
+      document.getElementById("editSongs").value = "";
+      document.getElementById("editYear").value = "";
+
+      alert("Album módosítva!");
+      listAlbums();
+    }
+
+    async function deleteAlbum() {
+      const id = parseInt(document.getElementById("deleteId").value);
+      if (isNaN(id)) {
+        alert("Hibás ID!");
+        return;
+      }
+
+      await fetch(`http://localhost:3000/albums/${id}`, {
+        method: "DELETE"
+      });
+
+      document.getElementById("deleteId").value = "";
+
+      alert("Album törölve!");
+      listAlbums();
+    }
+    
+  </script>
+
+</body>
+
+</html>
